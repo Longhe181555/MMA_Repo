@@ -16,6 +16,9 @@ const createTransaction = async (req, res) => {
 
         await transaction.save();
 
+        // Clear the user's cart after successful transaction
+        await User.findByIdAndUpdate(req.auth._id, { cart: [] });
+
         res.status(201).json({
             success: true,
             message: "Transaction created successfully",
@@ -87,8 +90,14 @@ const getAllTransactions = async (req, res) => {
             .populate('user', 'name email')
             .sort({ createdAt: -1 });
 
+        // Add error handling for unpopulated users
+        const safeTransactions = transactions.map(transaction => ({
+            ...transaction.toObject(),
+            user: transaction.user || { name: 'Unknown', email: 'No email' }
+        }));
+
         // Calculate total revenue
-        const totalRevenue = transactions.reduce((sum, transaction) => {
+        const totalRevenue = safeTransactions.reduce((sum, transaction) => {
             if (transaction.status === 'completed') {
                 return sum + transaction.totalAmount;
             }
@@ -97,18 +106,18 @@ const getAllTransactions = async (req, res) => {
 
         // Get statistics
         const stats = {
-            totalOrders: transactions.length,
-            completedOrders: transactions.filter(t => t.status === 'completed').length,
-            pendingOrders: transactions.filter(t => t.status === 'pending').length,
-            cancelledOrders: transactions.filter(t => t.status === 'cancelled').length,
+            totalOrders: safeTransactions.length,
+            completedOrders: safeTransactions.filter(t => t.status === 'completed').length,
+            pendingOrders: safeTransactions.filter(t => t.status === 'pending').length,
+            cancelledOrders: safeTransactions.filter(t => t.status === 'cancelled').length,
             totalRevenue: totalRevenue,
-            averageOrderValue: totalRevenue / transactions.filter(t => t.status === 'completed').length || 0
+            averageOrderValue: totalRevenue / safeTransactions.filter(t => t.status === 'completed').length || 0
         };
 
         res.status(200).json({
             success: true,
             stats,
-            transactions
+            transactions: safeTransactions
         });
     } catch (error) {
         console.error("Error in getAllTransactions: ", error);

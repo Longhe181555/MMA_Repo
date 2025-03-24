@@ -37,6 +37,15 @@ const transactionSchema = new mongoose.Schema(
         paymentMethod: {
             type: String,
             required: true
+        },
+        paymentStatus: {
+            type: String,
+            enum: ["pending", "paid", "failed"],
+            default: "pending"
+        },
+        paidAmount: {
+            type: Number,
+            default: 0
         }
     },
     { timestamps: true }

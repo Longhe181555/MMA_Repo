@@ -51,10 +51,11 @@ const cartReducer = (state, action) => {
 
         case 'REMOVE_FROM_CART':
             const filteredItems = state.items.filter(item => item._id !== action.payload);
+            const newTotal = filteredItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            console.log('Removing item, new state:', { items: filteredItems, total: newTotal }); // Debug log
             return {
-                ...state,
                 items: filteredItems,
-                total: filteredItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+                total: newTotal
             };
 
         case 'UPDATE_QUANTITY':
@@ -122,6 +123,7 @@ export const CartProvider = ({ children }) => {
     };
 
     const removeFromCart = (productId) => {
+        console.log('Attempting to remove product:', productId); // Debug log
         dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
     };
 

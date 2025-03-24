@@ -6,7 +6,8 @@ import {
     Image,
     TouchableOpacity,
     StyleSheet,
-    Alert
+    Alert,
+    Linking
 } from 'react-native';
 import { useCart } from '../context/cartContext';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -15,6 +16,8 @@ import axios from 'axios';
 
 const CartScreen = ({ navigation }) => {
     const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+
+    console.log('Current cart state:', cart); // Debug log
 
     const handleQuantityChange = (productId, currentQuantity, change) => {
         const newQuantity = currentQuantity + change;
@@ -45,7 +48,7 @@ const CartScreen = ({ navigation }) => {
         }
 
         try {
-            // Create transaction object
+            // Create transaction first
             const transaction = {
                 items: cart.items.map(item => ({
                     productId: item._id,
@@ -55,9 +58,9 @@ const CartScreen = ({ navigation }) => {
                     thumbnail: item.thumbnail
                 })),
                 totalAmount: cart.total,
-                paymentMethod: "Credit Card", // You can add payment method selection
+                paymentMethod: "VNPay",
                 shippingAddress: {
-                    street: "123 Main St", // You can add address form
+                    street: "123 Main St",
                     city: "City",
                     state: "State",
                     zipCode: "12345",
@@ -68,23 +71,18 @@ const CartScreen = ({ navigation }) => {
             const { data } = await axios.post("/transactions/create", transaction);
 
             if (data.success) {
-                Alert.alert(
-                    "Success",
-                    "Order placed successfully!",
-                    [
-                        {
-                            text: "View Order",
-                            onPress: () => {
-                                clearCart();
-                                navigation.navigate("TransactionHistory");
-                            }
-                        }
-                    ]
-                );
+                // Get VNPay payment URL
+                const paymentResponse = await axios.post(`/transactions/payment/vnpay/${data.transaction._id}`);
+
+                if (paymentResponse.data.success) {
+                    clearCart();
+                    // Open payment URL in browser or WebView
+                    Linking.openURL(paymentResponse.data.paymentUrl);
+                }
             }
         } catch (error) {
             console.error("Checkout error:", error);
-            Alert.alert("Error", "Failed to place order. Please try again.");
+            Alert.alert("Error", "Failed to process payment. Please try again.");
         }
     };
 
@@ -147,7 +145,10 @@ const CartScreen = ({ navigation }) => {
                                 },
                                 {
                                     text: "Remove",
-                                    onPress: () => removeFromCart(item._id),
+                                    onPress: () => {
+                                        removeFromCart(item._id);
+                                        console.log('Removing item:', item._id);
+                                    },
                                     style: "destructive"
                                 }
                             ]

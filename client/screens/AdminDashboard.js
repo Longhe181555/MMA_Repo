@@ -63,7 +63,7 @@ const AdminDashboard = () => {
 
     const StatCard = ({ title, value, icon, color }) => (
         <View style={[styles.statCard, { borderLeftColor: color }]}>
-            <Icon name={icon} size={24} color={color} />
+            {/* <Icon name={icon} size={24} color={color} /> */}
             <Text style={styles.statValue}>{value}</Text>
             <Text style={styles.statTitle}>{title}</Text>
         </View>
@@ -160,7 +160,9 @@ const AdminDashboard = () => {
                             <View style={styles.customerInfo}>
                                 <Icon name="person" size={16} color="#666" />
                                 <Text style={styles.customerText}>
-                                    {transaction.user.name} ({transaction.user.email})
+                                    {transaction.user ?
+                                        `${transaction.user.name} (${transaction.user.email})` :
+                                        'User information unavailable'}
                                 </Text>
                             </View>
 

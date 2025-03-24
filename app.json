@@ -1,0 +1,11 @@
+{
+    "expo": {
+        "scheme": "mmaapp",
+        "ios": {
+            "bundleIdentifier": "com.yourcompany.mmaapp"
+        },
+        "android": {
+            "package": "com.yourcompany.mmaapp"
+        }
+    }
+}
